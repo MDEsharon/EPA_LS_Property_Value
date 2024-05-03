@@ -26,7 +26,7 @@ str(marsh)
 #Data transformation
 #-------------------
 #Store approval issue dates as dates
-marsh$approval_issued <- as.Date(marsh$approval_issued, format = "%m/%d/%Y")
+marsh$approval_issued <- as.Date(marsh$approval_issued, format = "%m/%d/%y")
 
 #Some zip codes include ZIP+4 codes. Extracting only the 5-digit codes and changing the column to integers
 marsh$postal_code <- substr(marsh$postal_code, 1, 5)
@@ -112,7 +112,7 @@ str(sill)
 #Data transformation
 #-------------------
 #Store approval issue dates as dates
-sill$approval_issued <- as.Date(sill$approval_issued, format = "%m/%d/%Y")
+sill$approval_issued <- as.Date(sill$approval_issued, format = "%m/%d/%y")
 
 #Some zip codes include ZIP+4 codes. Extracting only the 5-digit codes and changing the column to integers
 sill$postal_code <- substr(sill$postal_code, 1, 5)
@@ -180,7 +180,7 @@ sill <- anti_join(sill, missing_sill)
 View(sill)
 
 #----------------------------------------------------------------
-## 3. Finalize cleaned data ##
+## 3. Finalize cleaned living shoreline data ##
 #----------------------------------------------------------------
 
 #Joining the marsh and sill data by id and year. Licenses with sills not accompanying marsh should not be included. 1,287 observations in total.
@@ -260,3 +260,75 @@ write.csv(non_matching, file = "non_matching_rows.csv", row.names = FALSE)
 #Made sure all the projects were in MD
 #Made sure all the lat/long coordinates were in dd
 #Corrected outliers
+
+#----------------------------------------------------------------
+## 4. Bulkhead data ##
+#----------------------------------------------------------------
+
+#Irrelevant columns are already deleted prior to loading it into R
+#Column names are changed prior to loading it in R
+#Columns sorted by oldest to newest licenses
+
+#Loading the data
+bulkhead <- read.csv("bulkhead_data.csv")
+
+#Data exploration
+#----------------
+#Started off with 3,394 observations
+summary(bulkhead)
+str(bulkhead)
+
+#Data transformation
+#-------------------
+#Store approval issue dates as dates
+bulkhead$approval_issued <- as.Date(bulkhead$approval_issued, format = "%m/%d/%y")
+
+#Some zip codes include ZIP+4 codes. Extracting only the 5-digit codes and changing the column to integers
+bulkhead$postal_code <- substr(bulkhead$postal_code, 1, 5)
+bulkhead$postal_code <- as.integer(bulkhead$postal_code)
+
+#Handling irrelevant and duplicate data
+#--------------------------------------
+
+#Delete projects with WQC, NT, and PR licenses. Deleted 63 observations. 3,324 observations left.
+irrelevant_bulkhead <- subset(bulkhead, grepl("WQC|NT|PR", permit_no))
+bulkhead <- subset(bulkhead, grepl("WL|GL|WP|GP", permit_no) & !grepl("WQC|NT|PR", permit_no))
+
+#######Need to extract the permit types and find out if there's anything that exists outside of WL, GL, WP, GP, WQC, NT, and PR################
+###############################################################################################################################################
+
+#Checking for duplicate sill dimension values
+duplicate_sill_rows <- duplicated(sill[c("master_ai_id", "Height_Above_MHWL", "Length_Feet", "Material", 
+                                         "Maximum_Extent_Channelward_Feet", "Width_Feet")])
+
+duplicate_sill <- sill[duplicate_sill_rows, ]
+
+#Delete duplicates. Deleted 85 observations. 1,449 observations are left.
+sill <- sill[!duplicate_sill_rows, ]
+rm(duplicate_sill_rows)
+
+#Create column with the authorization year of the sill
+sill$year <- paste0("20", substr(sill$permit_no, 1, 2))
+
+#Counting the number of sill structures each license has
+sill <- sill %>%
+  group_by(master_ai_id, year) %>%
+  mutate(sill_count = n()) %>%
+  ungroup()
+
+#Aggregating sill dimensions if licenses are authorized within the same year (ensure revisions are also combined together)
+combined_sill <- sill %>%
+  group_by(master_ai_id, year) %>%
+  summarize(across(c(Height_Above_MHWL, Length_Feet,
+                     Maximum_Extent_Channelward_Feet, Width_Feet), ~sum(.x, na.rm = FALSE)))
+View(combined_sill)
+
+sill <- merge(sill, combined_sill, by = c("master_ai_id", "year"), suffixes = c("", "_agg"))
+
+sill <- sill[order(sill$master_ai_id), ]
+rownames(sill) <- NULL
+
+#Removing the duplicates with the same id and year and removing the old columns. Deleted 295 observations. 1,154 observations are left.
+sill <- sill[!duplicated(sill[c("master_ai_id", "year")]), ]
+
+sill$Height_Above_MHWL <- sill$Length_Feet <- sill$Maximum_Extent_Channelward_Feet <- sill$Width_Feet <- NULL

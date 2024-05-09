@@ -290,12 +290,9 @@ bulkhead$postal_code <- as.integer(bulkhead$postal_code)
 #Handling irrelevant and duplicate data
 #--------------------------------------
 
-#Delete projects with WQC, NT, and PR licenses. Deleted 63 observations. 3,324 observations left.
-irrelevant_bulkhead <- subset(bulkhead, grepl("WQC|NT|PR", permit_no))
-bulkhead <- subset(bulkhead, grepl("WL|GL|WP|GP", permit_no) & !grepl("WQC|NT|PR", permit_no))
-
-#######Need to extract the permit types and find out if there's anything that exists outside of WL, GL, WP, GP, WQC, NT, and PR################
-###############################################################################################################################################
+#Delete projects with WQC, NT, and PR licenses. Deleted 68 observations. 3,324 observations left.
+irrelevant_bulkhead <- subset(bulkhead, !grepl("WL|GL|WP|GP", permit_no))
+bulkhead <- subset(bulkhead, grepl("WL|GL|WP|GP", permit_no))
 
 #Checking for duplicate sill dimension values
 duplicate_sill_rows <- duplicated(sill[c("master_ai_id", "Height_Above_MHWL", "Length_Feet", "Material", 
@@ -332,3 +329,14 @@ rownames(sill) <- NULL
 sill <- sill[!duplicated(sill[c("master_ai_id", "year")]), ]
 
 sill$Height_Above_MHWL <- sill$Length_Feet <- sill$Maximum_Extent_Channelward_Feet <- sill$Width_Feet <- NULL
+
+#----------------------------------------------------------------
+## 5. Revetment data ##
+#----------------------------------------------------------------
+revetment <- read.csv("revetment_data.csv")
+revetment$approval_issued <- as.Date(revetment$approval_issued, format = "%m/%d/%y")
+revetment$postal_code <- substr(revetment$postal_code, 1, 5)
+revetment$postal_code <- as.integer(revetment$postal_code)
+irrelevant_revetment <- subset(revetment, !grepl("WL|GL|WP|GP", permit_no))
+revetment <- subset(revetment, grepl("WL|GL|WP|GP", permit_no))
+

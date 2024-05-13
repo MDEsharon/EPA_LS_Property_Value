@@ -1,20 +1,4 @@
 ﻿master_ai_id,master_ai_name,coordinate_system,x_coord_value,y_coord_value,county,address_1,address_2,municipality,state_code,postal_code,permit_no,tracking_number,approval_issued,work_type,Length_Feet,Maximum_Extent_Channelward_Feet,Height_Above_Water_Feet
-84384,Jon Christ,Lat.\Long. - DMS,75 5 8.0000,38 21 50.0000,Worcester,812 32nd Street,,Ocean City,MD,21842,02-GL-0403,200166215,7/21/2010,Bulkhead - Replacement,50,1.5,4
-84384,Jon Christ,Lat.\Long. - DMS,75 05 08,38 21 49,Worcester,812 32nd Street,,Ocean City,MD,21842,02-GL-0403,200166215,7/21/2010,Bulkhead - Replacement,50,1.5,4
-72653,George Vickers,Lat.\Long. - DMS,75 58 51,38 34 57,Dorchester,5718 Beach Haven Rd,,East New Market,MD,21631,05-GL-0963,200561518,8/8/2010,Bulkhead - Replacement,54,1.5,2
-72653,George Vickers,Lat.\Long. - DMS,75 58 52.0000,38 35 0.0001,Dorchester,5718 Beach Haven Rd,,East New Market,MD,21631,05-GL-0963,200561518,8/8/2010,Bulkhead - Replacement,54,1.5,2
-127730,"Chestertown Marina/bulkhead, Pier  And",Lat.\Long. - DMS,76 3 54.0001,39 12 20.0000,Kent,98 CANNON ST,,Chestertown,MD,,06-WL-1842,200664286,8/13/2010,Bulkhead - Replacement,612,1.5,3
-125328,"Elk Point Marina/bulkhead, Boat Ramp,",Lat.\Long. - DMS,75 51 37.0001,39 34 2.9999,Cecil,1735 OLDFIELD POINT RD,,Elkton,MD,,07-GL-1161,200761007,9/28/2010,Bulkhead,900,,
-125874,Shore Land Ventures Llc/bulkhead,Lat.\Long. - DMS,76 14 44.0002,38 58 10.9999,Queen Anne's,3015 Kent Narrows Way,,Grasonville,MD,21638,07-WL-0989,200667713,9/10/2010,Bulkhead,170,,
-125874,Shore Land Ventures Llc/bulkhead,Lat.\Long. - DMS,76 14 44.0002,38 58 10.9999,Queen Anne's,3015 Kent Narrows Way,,Grasonville,MD,21638,07-WL-0989,200667713,9/10/2010,Bulkhead - Replacement,159,1.5,4
-123047,Atlantic Marina Resort/dredging,Lat.\Long. - DMS,76 27 30.0002,39 8 42.0000,Anne Arundel,2010 KNOLLVIEW DRIVE,,Pasadena,MD,,07-WL-1637(R),200762473,2/8/2011,Bulkhead,150,0,
-124889,"Metompkin Bay Oyster Co/dredging,",Lat.\Long. - DMS,75 51 20.0002,37 59 16.9999,Somerset,WELLINGTON RD,,Crisfield,MD,,07-WP-1426,200761797,4/9/2010,Bulkhead,780,,
-114560,"Doxanner, Mark/revetment  And  Pier",Lat.\Long. - DMS,76 22 29.0000,39 19 17.0001,Baltimore,862 SENECA PARK ROAD,,Middle River,MD,,08-GL-0221 (R),200764061,11/1/2010,Bulkhead - Replacement,50,18,
-110415,Robert Brosso,Lat.\Long. - DMS,76 22 37.0000,39 19 1.0000,Baltimore,1165 Seneca Rd,,Middle River,MD,21220,08-GL-0456 (R),200764814,8/4/2010,Bulkhead - Replacement,36,1.5,3
-88470,"Kalp, Saumya/bulkhead  And  Pier",Lat.\Long. - DMS,75 7 1.0002,38 21 14.9999,Worcester,10342 NEW QUAY RD,,Ocean City,MD,,08-GP-1590(R),200862793,3/23/2011,Bulkhead - Replacement,60,1.5,3
-90825,Calvert Cliffs 3 Nuclear Project/ccnpp,Lat.\Long. - DMS,76 26 33.9998,38 26 0.0001,Calvert,1650 Calvert Cliffs Pkwy,,Lusby,MD,,08-WL-1462,200862371,10/24/2011,Bulkhead,180,180,
-90825,Calvert Cliffs 3 Nuclear Project/ccnpp,Lat.\Long. - DMS,76 26 33.9998,38 26 0.0001,Calvert,1650 Calvert Cliffs Pkwy,,Lusby,MD,,08-WL-1462,200862371,10/24/2011,Bulkhead,,,
-89170,"Annapolis Landing Marina/revetment,",Lat.\Long. - DMS,76 28 40.0002,38 57 57.0000,Anne Arundel,980 Awald Rd,,Annapolis,MD,21403,08-WL-1543(R1),200862677,11/12/2014,Bulkhead,70,1.5,
 84527,"Guard Jr, Dennis/carrs Creek/spur",Lat.\Long. - DMS,76 31 45,38 47 19,Anne Arundel,MAIN ST,,Deale,MD,,09-GL-0180,200863574,6/7/2010,Bulkhead - Replacement,85,0,3
 83159,"Flake, Glade/bulkhead",Lat.\Long. - DMS,76 27 28.9999,38 56 43.9999,Anne Arundel,40 E LAKE DR,,Annapolis,MD,,09-GL-0271,200863762,7/28/2010,Bulkhead - Replacement,53,1.5,3
 83137,"Crenshaw, Richard/bulkhead  And  Stone Sill",Lat.\Long. - DMS,76 31 42.0002,38 50 14.0001,Anne Arundel,4927 HINE DR,,Shady Side,MD,,09-GL-0272(R),200863764,1/20/2010,Bulkhead - Replacement,140,1.5,3

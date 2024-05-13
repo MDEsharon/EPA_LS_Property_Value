@@ -7,8 +7,11 @@
 #Setting working directory
 setwd("C:/Users/szhang/Desktop/EPA Property Value Data")
 
+#Installing and loading packages
 #install.packages("dplyr")
 #install.packages("stringr")
+library(dplyr)
+library(stringr)
 
 #Irrelevant columns are already deleted prior to loading it into R
 #Column names are changed prior to loading it in R
@@ -26,7 +29,7 @@ str(marsh)
 #Data transformation
 #-------------------
 #Store approval issue dates as dates
-marsh$approval_issued <- as.Date(marsh$approval_issued, format = "%m/%d/%y")
+marsh$approval_issued <- as.Date(marsh$approval_issued, format = "%m/%d/%Y")
 
 #Some zip codes include ZIP+4 codes. Extracting only the 5-digit codes and changing the column to integers
 marsh$postal_code <- substr(marsh$postal_code, 1, 5)
@@ -51,7 +54,6 @@ marsh <- marsh[!duplicate_rows, ]
 rm(duplicate_rows)
 
 #Create column with the authorization year of the living shoreline
-library(dplyr)
 marsh$year <- paste0("20", substr(marsh$permit_no, 1, 2))
 
 #Aggregating marsh dimensions if licenses are authorized within the same year (ensure revisions are also combined together)
@@ -112,7 +114,7 @@ str(sill)
 #Data transformation
 #-------------------
 #Store approval issue dates as dates
-sill$approval_issued <- as.Date(sill$approval_issued, format = "%m/%d/%y")
+sill$approval_issued <- as.Date(sill$approval_issued, format = "%m/%d/%Y")
 
 #Some zip codes include ZIP+4 codes. Extracting only the 5-digit codes and changing the column to integers
 sill$postal_code <- substr(sill$postal_code, 1, 5)
@@ -197,7 +199,6 @@ merged_data$address <- ifelse(merged_data$address_2 == "",
 merged_data$address_1 <- merged_data$address_2 <- NULL
 
 #Capitalizing only the first letter of every word in the address column.
-library(stringr)
 merged_data$address <- str_to_title(merged_data$address)
 
 # Converting lat/long coordinates in DMS format to DD format
@@ -274,14 +275,14 @@ bulkhead <- read.csv("bulkhead_data.csv")
 
 #Data exploration
 #----------------
-#Started off with 3,394 observations
+#Started off with 3,378 observations
 summary(bulkhead)
 str(bulkhead)
 
 #Data transformation
 #-------------------
 #Store approval issue dates as dates
-bulkhead$approval_issued <- as.Date(bulkhead$approval_issued, format = "%m/%d/%y")
+bulkhead$approval_issued <- as.Date(bulkhead$approval_issued, format = "%m/%d/%Y")
 
 #Some zip codes include ZIP+4 codes. Extracting only the 5-digit codes and changing the column to integers
 bulkhead$postal_code <- substr(bulkhead$postal_code, 1, 5)
@@ -290,51 +291,51 @@ bulkhead$postal_code <- as.integer(bulkhead$postal_code)
 #Handling irrelevant and duplicate data
 #--------------------------------------
 
-#Delete projects with WQC, NT, and PR licenses. Deleted 68 observations. 3,324 observations left.
+#Delete projects with WQC, NT, and PR licenses. Deleted 70 observations. 3,308 observations left.
 irrelevant_bulkhead <- subset(bulkhead, !grepl("WL|GL|WP|GP", permit_no))
 bulkhead <- subset(bulkhead, grepl("WL|GL|WP|GP", permit_no))
 
-#Checking for duplicate sill dimension values
-duplicate_sill_rows <- duplicated(sill[c("master_ai_id", "Height_Above_MHWL", "Length_Feet", "Material", 
-                                         "Maximum_Extent_Channelward_Feet", "Width_Feet")])
+#Checking for duplicate bulkhead dimension values
+duplicate_bulkhead_rows <- duplicated(bulkhead[c("master_ai_id", "Length_Feet", 
+                                         "Maximum_Extent_Channelward_Feet", "Height_Above_Water_Feet")])
 
-duplicate_sill <- sill[duplicate_sill_rows, ]
+duplicate_bulkhead <- bulkhead[duplicate_bulkhead_rows, ]
 
-#Delete duplicates. Deleted 85 observations. 1,449 observations are left.
-sill <- sill[!duplicate_sill_rows, ]
-rm(duplicate_sill_rows)
+#Delete duplicates. Deleted 98 observations. 3,210 observations are left.
+bulkhead <- bulkhead[!duplicate_bulkhead_rows, ]
+rm(duplicate_bulkhead_rows)
 
-#Create column with the authorization year of the sill
-sill$year <- paste0("20", substr(sill$permit_no, 1, 2))
+#Create column with the authorization year of the bulkhead
+bulkhead$year <- paste0("20", substr(bulkhead$permit_no, 1, 2))
 
-#Counting the number of sill structures each license has
-sill <- sill %>%
+#Counting the number of bulkhead structures each license has
+bulkhead <- bulkhead %>%
   group_by(master_ai_id, year) %>%
-  mutate(sill_count = n()) %>%
+  mutate(bulkhead_count = n()) %>%
   ungroup()
 
 #Aggregating sill dimensions if licenses are authorized within the same year (ensure revisions are also combined together)
-combined_sill <- sill %>%
+combined_bulkhead <- bulkhead %>%
   group_by(master_ai_id, year) %>%
-  summarize(across(c(Height_Above_MHWL, Length_Feet,
-                     Maximum_Extent_Channelward_Feet, Width_Feet), ~sum(.x, na.rm = FALSE)))
-View(combined_sill)
+  summarize(across(c(Length_Feet, Maximum_Extent_Channelward_Feet, Height_Above_Water_Feet), ~sum(.x, na.rm = FALSE)))
 
-sill <- merge(sill, combined_sill, by = c("master_ai_id", "year"), suffixes = c("", "_agg"))
+View(combined_bulkhead)
 
-sill <- sill[order(sill$master_ai_id), ]
-rownames(sill) <- NULL
+bulkhead <- merge(bulkhead, combined_bulkhead, by = c("master_ai_id", "year"), suffixes = c("", "_agg"))
 
-#Removing the duplicates with the same id and year and removing the old columns. Deleted 295 observations. 1,154 observations are left.
-sill <- sill[!duplicated(sill[c("master_ai_id", "year")]), ]
+bulkhead <- bulkhead[order(bulkhead$master_ai_id), ]
+rownames(bulkhead) <- NULL
 
-sill$Height_Above_MHWL <- sill$Length_Feet <- sill$Maximum_Extent_Channelward_Feet <- sill$Width_Feet <- NULL
+#Removing the duplicates with the same id and year and removing the old columns. Deleted 183 observations. 3,027 observations are left.
+bulkhead <- bulkhead[!duplicated(bulkhead[c("master_ai_id", "year")]), ]
+
+bulkhead$Length_Feet <- bulkhead$Maximum_Extent_Channelward_Feet <- bulkhead$Height_Above_Water_Feet <- NULL
 
 #----------------------------------------------------------------
 ## 5. Revetment data ##
 #----------------------------------------------------------------
 revetment <- read.csv("revetment_data.csv")
-revetment$approval_issued <- as.Date(revetment$approval_issued, format = "%m/%d/%y")
+revetment$approval_issued <- as.Date(revetment$approval_issued, format = "%m/%d/%Y")
 revetment$postal_code <- substr(revetment$postal_code, 1, 5)
 revetment$postal_code <- as.integer(revetment$postal_code)
 irrelevant_revetment <- subset(revetment, !grepl("WL|GL|WP|GP", permit_no))

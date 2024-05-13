@@ -228,6 +228,24 @@ merged_data$x_coord_value <- merged_data$y_coord_value <- merged_data$coordinate
 #Exporting the clean dataset
 write.csv(merged_data, "marsh_data_clean_revised.csv", row.names = FALSE)
 
+#Handling missing data
+#--------------------
+#I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
+
+#Deleting rows with values of 0s or missing values in all columns. Deleted 3 observations. 1,151 observations are left.
+missing_sill <- sill %>%
+  filter(
+    rowSums(is.na(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
+                         "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg"))) == 4 |
+      rowSums(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
+                     "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg")) == 0
+  )
+
+View(missing_sill)
+
+sill <- anti_join(sill, missing_sill)
+View(sill)
+
 #----------------------------------------------------------------
 ## 4. Manual cleaning ##
 #----------------------------------------------------------------
@@ -314,6 +332,9 @@ bulkhead <- bulkhead %>%
   mutate(bulkhead_count = n()) %>%
   ungroup()
 
+###############If a lot of NAs for bulkhead, need to count bulkhead structures, but now count those rows with NAs only###
+############################################################################################
+
 #Aggregating sill dimensions if licenses are authorized within the same year (ensure revisions are also combined together)
 combined_bulkhead <- bulkhead %>%
   group_by(master_ai_id, year) %>%
@@ -330,6 +351,24 @@ rownames(bulkhead) <- NULL
 bulkhead <- bulkhead[!duplicated(bulkhead[c("master_ai_id", "year")]), ]
 
 bulkhead$Length_Feet <- bulkhead$Maximum_Extent_Channelward_Feet <- bulkhead$Height_Above_Water_Feet <- NULL
+
+#Handling missing data
+#--------------------
+#I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
+
+#Deleting rows with values of 0s or missing values in all columns. Deleted 3 observations. 1,151 observations are left.
+missing_bulkhead <- bulkhead %>%
+  filter(
+    rowSums(is.na(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
+                         "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg"))) == 4 |
+      rowSums(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
+                     "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg")) == 0
+  )
+
+View(missing_sill)
+
+sill <- anti_join(sill, missing_sill)
+View(sill)
 
 #----------------------------------------------------------------
 ## 5. Revetment data ##

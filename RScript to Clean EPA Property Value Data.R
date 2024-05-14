@@ -228,24 +228,6 @@ merged_data$x_coord_value <- merged_data$y_coord_value <- merged_data$coordinate
 #Exporting the clean dataset
 write.csv(merged_data, "marsh_data_clean_revised.csv", row.names = FALSE)
 
-#Handling missing data
-#--------------------
-#I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
-
-#Deleting rows with values of 0s or missing values in all columns. Deleted 3 observations. 1,151 observations are left.
-missing_sill <- sill %>%
-  filter(
-    rowSums(is.na(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
-                         "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg"))) == 4 |
-      rowSums(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
-                     "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg")) == 0
-  )
-
-View(missing_sill)
-
-sill <- anti_join(sill, missing_sill)
-View(sill)
-
 #----------------------------------------------------------------
 ## 4. Manual cleaning ##
 #----------------------------------------------------------------
@@ -323,6 +305,22 @@ duplicate_bulkhead <- bulkhead[duplicate_bulkhead_rows, ]
 bulkhead <- bulkhead[!duplicate_bulkhead_rows, ]
 rm(duplicate_bulkhead_rows)
 
+#Handling missing data
+#--------------------
+#I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
+
+#Deleting rows with values of 0s or missing values in all columns. Deleted __ observations. ____ observations are left.
+missing_bulkhead <- bulkhead %>%
+  filter(
+    rowSums(is.na(select(., "Length_Feet", "Maximum_Extent_Channelward_Feet", "Height_Above_Water_Feet"))) == 3 |
+      rowSums(select(., "Length_Feet", "Maximum_Extent_Channelward_Feet", "Height_Above_Water_Feet")) == 0
+  )
+
+View(missing_bulkhead)
+
+bulkhead <- anti_join(bulkhead, missing_bulkhead)
+View(bulkhead)
+
 #Create column with the authorization year of the bulkhead
 bulkhead$year <- paste0("20", substr(bulkhead$permit_no, 1, 2))
 
@@ -332,9 +330,8 @@ bulkhead <- bulkhead %>%
   mutate(bulkhead_count = n()) %>%
   ungroup()
 
-###############If a lot of NAs for bulkhead, need to count bulkhead structures, but now count those rows with NAs only###
-############################################################################################
-
+#Aggregating dimensions
+#--------------------
 #Aggregating sill dimensions if licenses are authorized within the same year (ensure revisions are also combined together)
 combined_bulkhead <- bulkhead %>%
   group_by(master_ai_id, year) %>%
@@ -352,23 +349,60 @@ bulkhead <- bulkhead[!duplicated(bulkhead[c("master_ai_id", "year")]), ]
 
 bulkhead$Length_Feet <- bulkhead$Maximum_Extent_Channelward_Feet <- bulkhead$Height_Above_Water_Feet <- NULL
 
-#Handling missing data
-#--------------------
-#I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
+#Fixing structural errors
+#------------------------
+#Combining address 1 and address 2 columns into one address column
+bulkhead$address <- ifelse(bulkhead$address_2 == "",
+                              paste(bulkhead$address_1, bulkhead$address_2, sep = " "),
+                              paste(bulkhead$address_1, bulkhead$address_2, sep = ", "))
 
-#Deleting rows with values of 0s or missing values in all columns. Deleted 3 observations. 1,151 observations are left.
-missing_bulkhead <- bulkhead %>%
-  filter(
-    rowSums(is.na(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
-                         "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg"))) == 4 |
-      rowSums(select(., "Height_Above_MHWL_agg", "Length_Feet_agg",
-                     "Maximum_Extent_Channelward_Feet_agg", "Width_Feet_agg")) == 0
-  )
+bulkhead$address_1 <- bulkhead$address_2 <- NULL
 
-View(missing_sill)
+#Capitalizing only the first letter of every word in the address column.
+bulkhead$address <- str_to_title(bulkhead$address)
 
-sill <- anti_join(sill, missing_sill)
-View(sill)
+# Converting lat/long coordinates in DMS format to DD format
+dms_to_dd <- function(dms) { 
+  parts <- strsplit(dms, " ")
+  sign <- ifelse(substr(dms, 1, 1) == "-", -1, 1) # Determine the sign based on negative values
+  
+  degrees <- as.numeric(parts[[1]][1])
+  minutes <- as.numeric(parts[[1]][2])
+  seconds <- as.numeric(parts[[1]][3])
+  
+  dd <- degrees + sign*abs(minutes/60 + seconds/3600)
+  return(dd)} # Custom function
+
+bulkhead$longitude <- ifelse(grepl("\\d+ \\d+ \\d+", bulkhead$x_coord_value),
+                                sapply(bulkhead$x_coord_value, dms_to_dd),
+                                as.numeric(bulkhead$x_coord_value))
+
+bulkhead$latitude <- ifelse(grepl("\\d+ \\d+ \\d+", bulkhead$y_coord_value),
+                               sapply(bulkhead$y_coord_value, dms_to_dd),
+                               as.numeric(bulkhead$y_coord_value))
+
+bulkhead$longitude <- ifelse(!is.na(bulkhead$longitude) & bulkhead$longitude > 0, -bulkhead$longitude, bulkhead$longitude)
+
+bulkhead$x_coord_value <- bulkhead$y_coord_value <- bulkhead$coordinate_system <- NULL
+
+#Exporting the clean dataset
+write.csv(bulkhead, "bulkhead_clean.csv", row.names = FALSE)
+
+#Checking for outliers
+#---------------------
+z_scores_bulkhead <- scale(bulkhead[, c("Length_Feet_agg", "Maximum_Extent_Channelward_Feet_agg", "Height_Above_Water_Feet_agg")])
+
+outliers_bulkhead <- bulkhead[rowSums(abs(z_scores_bulkhead) > 3) > 0, ]
+
+write.csv(outliers_bulkhead, "outliers_bulkhead.csv", row.names = FALSE)
+
+View(outliers_bulkhead) #2,856 observations that may be out of the norm. Most are blank rows? Will manually go through them.
+
+#Validating and QA
+#-----------------
+#Made sure all the projects were in MD
+#Made sure all the lat/long coordinates were in dd
+#Corrected outliers
 
 #----------------------------------------------------------------
 ## 5. Revetment data ##

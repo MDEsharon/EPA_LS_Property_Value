@@ -275,7 +275,7 @@ bulkhead <- read.csv("bulkhead_data.csv")
 
 #Data exploration
 #----------------
-#Started off with 3,378 observations
+#Started off with 3,390 observations
 summary(bulkhead)
 str(bulkhead)
 
@@ -290,7 +290,7 @@ bulkhead$postal_code <- as.integer(bulkhead$postal_code)
 
 #Handling irrelevant and duplicate data
 #--------------------------------------
-#Delete projects with WQC, NT, and PR licenses. Deleted 70 observations. 3,308 observations left.
+#Delete projects with WQC, NT, NL? and PR licenses. Deleted 70 observations. 3,320 observations left.
 irrelevant_bulkhead <- subset(bulkhead, !grepl("WL|GL|WP|GP", permit_no))
 bulkhead <- subset(bulkhead, grepl("WL|GL|WP|GP", permit_no))
 
@@ -300,7 +300,7 @@ duplicate_bulkhead_rows <- duplicated(bulkhead[c("master_ai_id", "Length_Feet",
 
 duplicate_bulkhead <- bulkhead[duplicate_bulkhead_rows, ]
 
-#Delete duplicates. Deleted 98 observations. 3,210 observations are left.
+#Delete duplicates. Deleted 98 observations. 3,222 observations are left.
 bulkhead <- bulkhead[!duplicate_bulkhead_rows, ]
 rm(duplicate_bulkhead_rows)
 
@@ -308,7 +308,7 @@ rm(duplicate_bulkhead_rows)
 #--------------------
 #I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
 
-#Deleting rows with values of 0s or missing values in all columns. Deleted __ observations. ____ observations are left.
+#Deleting rows with values of 0s or missing values in all columns. Deleted 1 observations. 3,221 observations are left.
 missing_bulkhead <- bulkhead %>%
   filter(
     rowSums(is.na(select(., "Length_Feet", "Maximum_Extent_Channelward_Feet", "Height_Above_Water_Feet"))) == 3 |
@@ -320,7 +320,7 @@ View(missing_bulkhead)
 bulkhead <- anti_join(bulkhead, missing_bulkhead)
 View(bulkhead)
 
-#Create column with the authorization year of the bulkhead
+#Create column with the year of the permit
 bulkhead$year <- paste0("20", substr(bulkhead$permit_no, 1, 2))
 
 #Counting the number of bulkhead structures each license has
@@ -331,10 +331,10 @@ bulkhead <- bulkhead %>%
 
 #Aggregating dimensions
 #--------------------
-#Aggregating sill dimensions if licenses are authorized within the same year (ensure revisions are also combined together)
+#Aggregating bulkhead length if they have the same permit year (ensure revisions are also combined together)
 combined_bulkhead <- bulkhead %>%
   group_by(master_ai_id, year) %>%
-  summarize(across(c(Length_Feet, Maximum_Extent_Channelward_Feet, Height_Above_Water_Feet), ~sum(.x, na.rm = FALSE)))
+  summarize(across(c(Length_Feet), ~sum(.x, na.rm = FALSE)))
 
 View(combined_bulkhead)
 
@@ -343,10 +343,10 @@ bulkhead <- merge(bulkhead, combined_bulkhead, by = c("master_ai_id", "year"), s
 bulkhead <- bulkhead[order(bulkhead$master_ai_id), ]
 rownames(bulkhead) <- NULL
 
-#Removing the duplicates with the same id and year and removing the old columns. Deleted 183 observations. 3,027 observations are left.
+#Removing the duplicates with the same id and year and removing the old columns. Deleted 184 observations. 3,037 observations are left.
 bulkhead <- bulkhead[!duplicated(bulkhead[c("master_ai_id", "year")]), ]
 
-bulkhead$Length_Feet <- bulkhead$Maximum_Extent_Channelward_Feet <- bulkhead$Height_Above_Water_Feet <- NULL
+bulkhead$Length_Feet <- NULL
 
 #Fixing structural errors
 #------------------------
@@ -389,7 +389,7 @@ write.csv(bulkhead, "bulkhead_clean.csv", row.names = FALSE)
 
 #Checking for outliers
 #---------------------
-z_scores_bulkhead <- scale(bulkhead[, c("Length_Feet_agg", "Maximum_Extent_Channelward_Feet_agg", "Height_Above_Water_Feet_agg")])
+z_scores_bulkhead <- scale(bulkhead[, c("Length_Feet_agg", "Maximum_Extent_Channelward_Feet", "Height_Above_Water_Feet")])
 
 outliers_bulkhead <- bulkhead[rowSums(abs(z_scores_bulkhead) > 3) > 0, ]
 
@@ -431,7 +431,7 @@ revetment$postal_code <- as.integer(revetment$postal_code)
 
 #Handling irrelevant and duplicate data
 #--------------------------------------
-#Delete projects with WQC, NT, and PR licenses. Deleted 35 observations. 3,307 observations left.
+#Delete projects with WQC, NT, NL and PR licenses. Deleted 35 observations. 3,307 observations left.
 irrelevant_revetment <- subset(revetment, !grepl("WL|GL|WP|GP", permit_no))
 revetment <- subset(revetment, grepl("WL|GL|WP|GP", permit_no))
 
@@ -445,7 +445,101 @@ duplicate_revetment <- revetment[duplicate_revetment_rows, ]
 revetment <- revetment[!duplicate_revetment_rows, ]
 rm(duplicate_revetment_rows)
 
-#############Check duplicate revetment spreadsheet and make sure most of them are duplicates.
-
 #Handling missing data
 #--------------------
+#I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
+
+#Deleting rows with values of 0s or missing values in all columns. Deleted _ observations. ___ observations are left.
+missing_revetment <- revetment %>%
+  filter(
+    rowSums(is.na(select(., "Length_Feet", "Maximum_Extent_Channelward_Feet"))) == 2 |
+      rowSums(select(., "Length_Feet", "Maximum_Extent_Channelward_Feet")) == 0
+  )
+
+View(missing_revetment)
+
+revetment <- anti_join(revetment, missing_revetment)
+View(revetment)
+
+#Create column with the year of the permit
+revetment$year <- paste0("20", substr(revetment$permit_no, 1, 2))
+
+#Counting the number of revetment structures each license has
+revetment <- revetment %>%
+  group_by(master_ai_id, year) %>%
+  mutate(revetment_count = n()) %>%
+  ungroup()
+
+#Aggregating dimensions
+#--------------------
+#Aggregating revetment length if they have the same permit year (ensure revisions are also combined together)
+combined_revetment <- revetment %>%
+  group_by(master_ai_id, year) %>%
+  summarize(across(c(Length_Feet), ~sum(.x, na.rm = FALSE)))
+
+View(combined_revetment)
+
+revetment <- merge(revetment, combined_revetment, by = c("master_ai_id", "year"), suffixes = c("", "_agg"))
+
+revetment <- revetment[order(revetment$master_ai_id), ]
+rownames(revetment) <- NULL
+
+#Removing the duplicates with the same id and year and removing the old columns. Deleted _ observations. ___ observations are left.
+revetment <- revetment[!duplicated(revetment[c("master_ai_id", "year")]), ]
+
+revetment$Length_Feet <- NULL
+
+#Fixing structural errors
+#------------------------
+#Combining address 1 and address 2 columns into one address column
+revetment$address <- ifelse(revetment$address_2 == "",
+                           paste(revetment$address_1, revetment$address_2, sep = " "),
+                           paste(revetment$address_1, revetment$address_2, sep = ", "))
+
+revetment$address_1 <- revetment$address_2 <- NULL
+
+#Capitalizing only the first letter of every word in the address column.
+revetment$address <- str_to_title(revetment$address)
+
+# Converting lat/long coordinates in DMS format to DD format
+dms_to_dd <- function(dms) { 
+  parts <- strsplit(dms, " ")
+  sign <- ifelse(substr(dms, 1, 1) == "-", -1, 1) # Determine the sign based on negative values
+  
+  degrees <- as.numeric(parts[[1]][1])
+  minutes <- as.numeric(parts[[1]][2])
+  seconds <- as.numeric(parts[[1]][3])
+  
+  dd <- degrees + sign*abs(minutes/60 + seconds/3600)
+  return(dd)} # Custom function
+
+revetment$longitude <- ifelse(grepl("\\d+ \\d+ \\d+", revetment$x_coord_value),
+                             sapply(revetment$x_coord_value, dms_to_dd),
+                             as.numeric(revetment$x_coord_value))
+
+revetment$latitude <- ifelse(grepl("\\d+ \\d+ \\d+", revetment$y_coord_value),
+                            sapply(revetment$y_coord_value, dms_to_dd),
+                            as.numeric(revetment$y_coord_value))
+
+revetment$longitude <- ifelse(!is.na(revetment$longitude) & revetment$longitude > 0, -revetment$longitude, revetment$longitude)
+
+revetment$x_coord_value <- revetment$y_coord_value <- revetment$coordinate_system <- NULL
+
+#Exporting the clean dataset
+write.csv(bulkhead, "bulkhead_clean.csv", row.names = FALSE)
+
+#Checking for outliers
+#---------------------
+z_scores_revetment <- scale(revetment[, c("Length_Feet_agg", "Maximum_Extent_Channelward_Feet")])
+
+outliers_revetment <- revetment[rowSums(abs(z_scores_revetment) > 3) > 0, ]
+
+write.csv(outliers_revetment, "outliers_revetment.csv", row.names = FALSE)
+
+View(outliers_revetment) #64 observations that may be out of the norm. Most are blank rows? Will manually go through them.
+
+#Validating and QA
+#-----------------
+#Made sure all the projects were in MD
+#Made sure all the lat/long coordinates were in dd
+#Corrected outliers

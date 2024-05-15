@@ -290,7 +290,6 @@ bulkhead$postal_code <- as.integer(bulkhead$postal_code)
 
 #Handling irrelevant and duplicate data
 #--------------------------------------
-
 #Delete projects with WQC, NT, and PR licenses. Deleted 70 observations. 3,308 observations left.
 irrelevant_bulkhead <- subset(bulkhead, !grepl("WL|GL|WP|GP", permit_no))
 bulkhead <- subset(bulkhead, grepl("WL|GL|WP|GP", permit_no))
@@ -407,10 +406,46 @@ View(outliers_bulkhead) #2,856 observations that may be out of the norm. Most ar
 #----------------------------------------------------------------
 ## 5. Revetment data ##
 #----------------------------------------------------------------
+
+#Irrelevant columns are already deleted prior to loading it into R
+#Column names are changed prior to loading it in R
+#Columns sorted by oldest to newest licenses
+
+#Loading the data
 revetment <- read.csv("revetment_data.csv")
+
+#Data exploration
+#----------------
+#Started off with 3,342 observations
+summary(revetment)
+str(revetment)
+
+#Data transformation
+#-------------------
+#Store approval issue dates as dates
 revetment$approval_issued <- as.Date(revetment$approval_issued, format = "%m/%d/%Y")
+
+#Some zip codes include ZIP+4 codes. Extracting only the 5-digit codes and changing the column to integers
 revetment$postal_code <- substr(revetment$postal_code, 1, 5)
 revetment$postal_code <- as.integer(revetment$postal_code)
+
+#Handling irrelevant and duplicate data
+#--------------------------------------
+#Delete projects with WQC, NT, and PR licenses. Deleted 35 observations. 3,307 observations left.
 irrelevant_revetment <- subset(revetment, !grepl("WL|GL|WP|GP", permit_no))
 revetment <- subset(revetment, grepl("WL|GL|WP|GP", permit_no))
 
+#Checking for duplicate revetment dimension values
+duplicate_revetment_rows <- duplicated(revetment[c("master_ai_id", "Length_Feet", 
+                                                 "Material_Type", "Maximum_Extent_Channelward_Feet")])
+
+duplicate_revetment <- revetment[duplicate_revetment_rows, ]
+
+#Delete duplicates. Deleted 120 observations. 3,187 observations are left.
+revetment <- revetment[!duplicate_revetment_rows, ]
+rm(duplicate_revetment_rows)
+
+#############Check duplicate revetment spreadsheet and make sure most of them are duplicates.
+
+#Handling missing data
+#--------------------

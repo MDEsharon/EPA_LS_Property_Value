@@ -416,7 +416,7 @@ revetment <- read.csv("revetment_data.csv")
 
 #Data exploration
 #----------------
-#Started off with 3,342 observations
+#Started off with 3,338 observations
 summary(revetment)
 str(revetment)
 
@@ -431,7 +431,7 @@ revetment$postal_code <- as.integer(revetment$postal_code)
 
 #Handling irrelevant and duplicate data
 #--------------------------------------
-#Delete projects with WQC, NT, NL and PR licenses. Deleted 35 observations. 3,307 observations left.
+#Delete projects with WQC, NT, NL and PR licenses. Deleted 35 observations. 3,303 observations left.
 irrelevant_revetment <- subset(revetment, !grepl("WL|GL|WP|GP", permit_no))
 revetment <- subset(revetment, grepl("WL|GL|WP|GP", permit_no))
 
@@ -441,7 +441,7 @@ duplicate_revetment_rows <- duplicated(revetment[c("master_ai_id", "Length_Feet"
 
 duplicate_revetment <- revetment[duplicate_revetment_rows, ]
 
-#Delete duplicates. Deleted 120 observations. 3,187 observations are left.
+#Delete duplicates. Deleted 118 observations. 3,185 observations are left.
 revetment <- revetment[!duplicate_revetment_rows, ]
 rm(duplicate_revetment_rows)
 
@@ -449,7 +449,7 @@ rm(duplicate_revetment_rows)
 #--------------------
 #I've previously filled in missing values. Any remaining missing values are truly missing, and a value of 0 means 0.
 
-#Deleting rows with values of 0s or missing values in all columns. Deleted _ observations. ___ observations are left.
+#Deleting rows with values of 0s or missing values in all columns. Deleted 20 observations. 3,165 observations are left.
 missing_revetment <- revetment %>%
   filter(
     rowSums(is.na(select(., "Length_Feet", "Maximum_Extent_Channelward_Feet"))) == 2 |
@@ -484,7 +484,7 @@ revetment <- merge(revetment, combined_revetment, by = c("master_ai_id", "year")
 revetment <- revetment[order(revetment$master_ai_id), ]
 rownames(revetment) <- NULL
 
-#Removing the duplicates with the same id and year and removing the old columns. Deleted _ observations. ___ observations are left.
+#Removing the duplicates with the same id and year and removing the old columns. Deleted 400 observations. 2,765 observations are left.
 revetment <- revetment[!duplicated(revetment[c("master_ai_id", "year")]), ]
 
 revetment$Length_Feet <- NULL
@@ -526,7 +526,7 @@ revetment$longitude <- ifelse(!is.na(revetment$longitude) & revetment$longitude 
 revetment$x_coord_value <- revetment$y_coord_value <- revetment$coordinate_system <- NULL
 
 #Exporting the clean dataset
-write.csv(bulkhead, "bulkhead_clean.csv", row.names = FALSE)
+write.csv(revetment, "revetment_clean.csv", row.names = FALSE)
 
 #Checking for outliers
 #---------------------
@@ -536,7 +536,7 @@ outliers_revetment <- revetment[rowSums(abs(z_scores_revetment) > 3) > 0, ]
 
 write.csv(outliers_revetment, "outliers_revetment.csv", row.names = FALSE)
 
-View(outliers_revetment) #64 observations that may be out of the norm. Most are blank rows? Will manually go through them.
+View(outliers_revetment) #43 observations that may be out of the norm. Will manually go through them.
 
 #Validating and QA
 #-----------------
